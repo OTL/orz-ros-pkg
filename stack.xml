@@ -1,0 +1,10 @@
+<stack>
+  <description brief="orz-ros-pkg">
+    OTL new ros packages
+  </description>
+  <author>Maintained by Takashi Ogura t.ogura@gmail.com</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/orz-ros-pkg</url>
+  <depend stack="ros" />
+</stack>
