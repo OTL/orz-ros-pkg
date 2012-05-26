@@ -14,5 +14,7 @@
   <depend package="rosservice"/>
   <depend package="rosparam"/>
   <depend package="rosgraph"/>
+  <depend package="rosgraph_msgs"/>
+  <depend package="rospy"/>
 
 </package>

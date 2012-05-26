@@ -22,7 +22,8 @@ import rostopic
 import rosservice
 import rosparam
 import rosgraph
-
+import rosgraph_msgs
+import rospy
 
 def notify_with_icon(name, body):
   """ Utility function for Notification"""
@@ -134,11 +135,10 @@ def build_node_submenu(menu, nodes):
 
 def build_param_submenu(menu, params):
   build_submenu(menu, params, [["Info", show_param_info],
-                            ["Delete", delete_param]])
+                               ["Delete", delete_param]])
 
 def build_topic_submenu(menu, topics):
-  build_submenu(menu, topics, [["Info", show_topic_info],
-                            ["Kill", kill_node]])
+  build_submenu(menu, topics, [["Info", show_topic_info]])
 
 def build_service_submenu(menu, services):
   build_submenu(menu, services, [["Info", show_service_info]])
@@ -157,14 +157,24 @@ def check_master():
   except socket.error:
     return False
 
-def build_menu(menu, name, func):
+def build_menu(menu, name, func, ind):
   """ build top level menu"""
   node_item = gtk.MenuItem(name)
   menu.append(node_item)
   node_menu = gtk.Menu()
   node_item.set_submenu(node_menu)
   node_item.connect("activate", func, node_menu)
+  node_item.connect("activate", clear_status, ind)
   return node_menu
+
+def rosout_callback(msg, ind):
+  if msg.level == rosgraph_msgs.msg.Log.ERROR or \
+        msg.level == rosgraph_msgs.msg.Log.FATAL:
+    ind.set_status(appindicator.STATUS_ATTENTION)
+
+def clear_status(w, ind):
+  if ind.get_status() == appindicator.STATUS_ATTENTION:
+    ind.set_status(appindicator.STATUS_ACTIVE)
 
 def main():
   if not check_master():
@@ -175,8 +185,12 @@ def main():
   ind = appindicator.Indicator ("ros-client",
                                 "ros",
                                 appindicator.CATEGORY_APPLICATION_STATUS)
+
   ind.set_status (appindicator.STATUS_ACTIVE)
   ind.set_icon_theme_path(os.path.abspath(os.path.abspath(os.path.dirname(__file__))))
+  ind.set_label("ROS")
+  rospy.init_node('ros_indicator', disable_signals=True)
+  rospy.Subscriber('/rosout', rosgraph_msgs.msg.Log, rosout_callback, ind)
 
   # not used now
   ind.set_attention_icon ("ros_attention")
@@ -191,33 +205,37 @@ def main():
   # rxconsole
   console_item = gtk.MenuItem("rxconsole")
   console_item.connect("activate", launch_console)
+  console_item.connect("activate", clear_status, ind)
   menu.append(console_item)
 
   menu.append(gtk.SeparatorMenuItem())
 
   # node menu
-  node_menu = build_menu(menu, "node", selected_node_menu)
+  node_menu = build_menu(menu, "node", selected_node_menu, ind)
   build_node_submenu(node_menu, [''])
 
   # topic menu
-  topic_menu = build_menu(menu, "topic", selected_topic_menu)
+  topic_menu = build_menu(menu, "topic", selected_topic_menu, ind)
   build_topic_submenu(topic_menu, [''])
 
   # service menu
-  service_menu = build_menu(menu, "service", selected_service_menu)
+  service_menu = build_menu(menu, "service", selected_service_menu, ind)
   build_service_submenu(service_menu, [''])
 
   # param menu
-  param_menu = build_menu(menu, "param", selected_param_menu)
+  param_menu = build_menu(menu, "param", selected_param_menu, ind)
   build_param_submenu(param_menu, [''])
 
   menu.show_all()
 
   ind.set_menu(menu)
+  gtk.gdk.threads_init()
+
   try:
     gtk.main()
   except KeyboardInterrupt:
     pass
+  rospy.signal_shutdown("keyboard interrupt")
 
 if __name__ == "__main__":
   main()
