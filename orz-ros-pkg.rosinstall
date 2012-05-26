@@ -1,0 +1,4 @@
+- git:
+    local-name: orz-ros-pkg
+    uri: https://github.com/OTL/orz-ros-pkg.git
+    version: master
