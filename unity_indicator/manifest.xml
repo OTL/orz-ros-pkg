@@ -1,0 +1,18 @@
+<package>
+  <description brief="unity_indicator">
+
+    unity_indicator add a small icon indicator on Ubuntu desktop.
+    You can access some ros api from the menu.
+
+  </description>
+  <author>Takashi Ogura</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/unity_indicator</url>
+  <depend package="rosnode"/>
+  <depend package="rostopic"/>
+  <depend package="rosservice"/>
+  <depend package="rosparam"/>
+  <depend package="rosgraph"/>
+
+</package>

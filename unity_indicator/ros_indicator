@@ -1,0 +1,223 @@
+#!/usr/bin/env python
+
+#
+# ROS Unity Indicator
+#
+# Takasih Ogura <t.ogura@gmail.com>
+#
+#   BSD License
+#
+
+import gobject
+import gtk
+import appindicator
+import sys
+import os
+import pynotify
+import subprocess
+import socket
+
+import rosnode
+import rostopic
+import rosservice
+import rosparam
+import rosgraph
+
+
+def notify_with_icon(name, body):
+  """ Utility function for Notification"""
+  imageURI = "file://%s/ros.svg"%os.path.abspath(os.path.dirname(__file__))
+  pynotify.Notification (name,
+                         body,
+                         imageURI).show()
+
+# callbacks
+
+def kill_node(w, name):
+  """kill node callback"""
+  rosnode.kill_nodes([name])
+
+def delete_param(w, name):
+  """ delete param callback"""
+  rosparam.delete_param(name)
+
+def show_node_info(w, name):
+  notify_with_icon(name, rosnode.get_node_info_description(name))
+
+def show_topic_info(w, name):
+  notify_with_icon(name, rostopic.get_info_text(name))
+
+def show_service_info(w, name):
+  notify_with_icon(name, rosservice.get_service_type(name))
+
+def show_param_info(w, name):
+  notify_with_icon(name, rosparam.get_param(name))
+
+def selected_node_menu(item, menu):
+  for i in menu.get_children():
+    menu.remove(i)
+  nodes=['']
+  try:
+    nodes = rosnode.get_node_names()
+  except rosnode.ROSNodeIOException:
+    pass
+  build_node_submenu(menu, nodes)
+  menu.show_all()
+
+
+def clear_menu(menu):
+  for i in menu.get_children():
+    menu.remove(i)
+
+
+def selected_topic_menu(item, menu):
+  clear_menu(menu)
+  topics = get_topic_list()
+  if topics:
+    build_topic_submenu(menu, topics)
+  else:
+    build_topic_submenu(menu, [''])
+  menu.show_all()
+
+
+def selected_service_menu(item, menu):
+  clear_menu(menu)
+  services = ['']
+  try:
+    services = rosservice.get_service_list()
+  except:
+    pass
+  build_service_submenu(menu, services)
+  menu.show_all()
+
+
+def selected_param_menu(item, menu):
+  clear_menu(menu)
+  params = ['']
+  try:
+    params = rosparam.list_params('')
+  except rosparam.RosParamIOException:
+    pass
+  build_param_submenu(menu, params)
+  menu.show_all()
+
+def get_topic_list():
+  """get all topics from master"""
+  master = rosgraph.Master('/rostopic')
+  try:
+    state = master.getSystemState()
+  except socket.error:
+    return []
+  pubs, subs, _ = state
+  topics = list(set([t for t,_ in pubs] + [t for t,_ in subs]))
+  topics.sort()
+  return topics
+
+def build_submenu(menu, topics, title_func_list):
+  if topics:
+    for name in topics:
+      menu_items = gtk.MenuItem(name)
+      menu_items.set_use_underline(False)
+      menu.append(menu_items)
+      node_menu = gtk.Menu()
+      for title, func in title_func_list:
+        info_item = gtk.MenuItem(title)
+        info_item.set_use_underline(False)
+        info_item.connect("activate", func, name)
+        node_menu.append(info_item)
+      menu_items.set_submenu(node_menu)
+  return menu
+
+def build_node_submenu(menu, nodes):
+  build_submenu(menu, nodes, [["Info", show_node_info],
+                            ["Kill", kill_node]])
+
+def build_param_submenu(menu, params):
+  build_submenu(menu, params, [["Info", show_param_info],
+                            ["Delete", delete_param]])
+
+def build_topic_submenu(menu, topics):
+  build_submenu(menu, topics, [["Info", show_topic_info],
+                            ["Kill", kill_node]])
+
+def build_service_submenu(menu, services):
+  build_submenu(menu, services, [["Info", show_service_info]])
+
+
+def launch_console(w):
+  """ launch rxconsole"""
+  subprocess.Popen(["rxconsole"])
+
+
+def check_master():
+  """ check if master is ok """
+  try:
+    rosgraph.Master('/ros_unity_icon').getPid()
+    return True
+  except socket.error:
+    return False
+
+def build_menu(menu, name, func):
+  """ build top level menu"""
+  node_item = gtk.MenuItem(name)
+  menu.append(node_item)
+  node_menu = gtk.Menu()
+  node_item.set_submenu(node_menu)
+  node_item.connect("activate", func, node_menu)
+  return node_menu
+
+def main():
+  if not check_master():
+    print "plase launch roscore at first"
+    sys.exit(1)
+
+  pynotify.init ("icon-summary-body")
+  ind = appindicator.Indicator ("ros-client",
+                                "ros",
+                                appindicator.CATEGORY_APPLICATION_STATUS)
+  ind.set_status (appindicator.STATUS_ACTIVE)
+  ind.set_icon_theme_path(os.path.abspath(os.path.abspath(os.path.dirname(__file__))))
+
+  # not used now
+  ind.set_attention_icon ("ros_attention")
+
+  # create a menu
+  menu = gtk.Menu()
+
+  master_uri_item = gtk.MenuItem("Master[%s]"%rosgraph.Master('/hoge').getUri())
+  master_uri_item.set_sensitive(False)
+  menu.append(master_uri_item)
+
+  # rxconsole
+  console_item = gtk.MenuItem("rxconsole")
+  console_item.connect("activate", launch_console)
+  menu.append(console_item)
+
+  menu.append(gtk.SeparatorMenuItem())
+
+  # node menu
+  node_menu = build_menu(menu, "node", selected_node_menu)
+  build_node_submenu(node_menu, [''])
+
+  # topic menu
+  topic_menu = build_menu(menu, "topic", selected_topic_menu)
+  build_topic_submenu(topic_menu, [''])
+
+  # service menu
+  service_menu = build_menu(menu, "service", selected_service_menu)
+  build_service_submenu(service_menu, [''])
+
+  # param menu
+  param_menu = build_menu(menu, "param", selected_param_menu)
+  build_param_submenu(param_menu, [''])
+
+  menu.show_all()
+
+  ind.set_menu(menu)
+  try:
+    gtk.main()
+  except KeyboardInterrupt:
+    pass
+
+if __name__ == "__main__":
+  main()
