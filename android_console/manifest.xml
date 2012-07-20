@@ -1,0 +1,9 @@
+<package>
+  <description brief="android_console">
+    android_consle
+  </description>
+  <author>Takashi Ogura</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/android_console</url>
+</package>
