@@ -30,6 +30,7 @@ public class RosListView<T> extends ListView implements NodeMain {
   private String topicName;
   private String messageType;
   //private ArrayAdapter<T> adapter;
+  private int bufferLimit = 20000;
 
   public RosListView(Context context) {
     super(context);
@@ -66,7 +67,8 @@ public class RosListView<T> extends ListView implements NodeMain {
 
   @Override
   public void onStart(ConnectedNode connectedNode) {
-    final ArrayAdapter<T> arrayAdapter = (ArrayAdapter<T>)getAdapter();
+    @SuppressWarnings("unchecked")
+	final ArrayAdapter<T> arrayAdapter = (ArrayAdapter<T>)getAdapter();
     Subscriber<T> subscriber =
         connectedNode.newSubscriber(topicName, messageType);
     subscriber.addMessageListener(new MessageListener<T>() {
