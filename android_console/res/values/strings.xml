@@ -6,5 +6,6 @@
     <string name="header_node">Node</string>
     <color name="header_color">#222244</color>
     <color name="separator_color">#DDCCCCCC</color>
+    <string name="header_level">Severity</string>
 
 </resources>

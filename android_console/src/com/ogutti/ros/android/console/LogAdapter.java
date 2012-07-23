@@ -63,9 +63,13 @@ public class LogAdapter extends ArrayAdapter<rosgraph_msgs.Log> {
     messageTextView.setText(item.getMsg());
     messageTextView.setTextColor(LogUtil.levelToColor(item.getLevel()));
     
+    // set level text
+    TextView levelTextView = (TextView)convertView.findViewById(R.id.console_level_text);
+    levelTextView.setText(LogUtil.levelToString(item.getLevel()));
+
     // set node text
-    TextView typeTextView = (TextView)convertView.findViewById(R.id.console_node_text);
-    typeTextView.setText(item.getName());
+    TextView nodeTextView = (TextView)convertView.findViewById(R.id.console_node_text);
+    nodeTextView.setText(item.getName());
 
     return convertView;
   }
