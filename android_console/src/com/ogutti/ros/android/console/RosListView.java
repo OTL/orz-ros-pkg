@@ -1,6 +1,6 @@
 package com.ogutti.ros.android.console;
 
-/*
+/* 
  * view can not be updated by other thread.
  * most simple way is make the view as a node.
  */
@@ -12,15 +12,13 @@ import org.ros.node.Node;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Subscriber;
 
-import android.util.Log;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 /**
- *
+ * 
  * @author Takashi Ogura <t.ogura@gmail.com>
  *
  * @param <T> message class
@@ -29,9 +27,9 @@ public class RosListView<T> extends ListView implements NodeMain {
 
   private String topicName;
   private String messageType;
-  //private ArrayAdapter<T> adapter;
-  private int bufferLimit = 20000;
 
+  private int bufferLimit = 1000;
+  
   public RosListView(Context context) {
     super(context);
   }
@@ -51,24 +49,24 @@ public class RosListView<T> extends ListView implements NodeMain {
   public void setMessageType(String messageType) {
     this.messageType = messageType;
   }
-
+  
   /**
    * set the limit. if limit is less than 0, it is unlimited.
    * @param limit number of shown messages in list view
    */
   public void setBufferLimit(int limit) {
-          this.bufferLimit = limit;
+	  this.bufferLimit = limit;
   }
 
   @Override
   public GraphName getDefaultNodeName() {
     return new GraphName("android_console/ros_list_view");
   }
-
+  
+  @SuppressWarnings("unchecked")
   @Override
   public void onStart(ConnectedNode connectedNode) {
-    @SuppressWarnings("unchecked")
-	final ArrayAdapter<T> arrayAdapter = (ArrayAdapter<T>)getAdapter();
+    final ArrayAdapter<T> arrayAdapter = (ArrayAdapter<T>)getAdapter();
     Subscriber<T> subscriber =
         connectedNode.newSubscriber(topicName, messageType);
     subscriber.addMessageListener(new MessageListener<T>() {
@@ -82,7 +80,7 @@ public class RosListView<T> extends ListView implements NodeMain {
               smoothScrollToPosition(getCount() - 1);
               if (bufferLimit >= 0) {
                 while (getCount() > bufferLimit) {
-                  arrayAdapter.remove(arrayAdapter.getItem(0));
+              	  arrayAdapter.remove(arrayAdapter.getItem(0));
                 }
               }
             }

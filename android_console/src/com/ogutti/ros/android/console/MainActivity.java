@@ -4,11 +4,14 @@ import java.util.List;
 import java.util.ArrayList;
 
 import android.app.AlertDialog;
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.DialogInterface.OnMultiChoiceClickListener;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -44,24 +47,24 @@ public class MainActivity extends RosActivity {
     super("rxconsole", "rxconsole");
     this.filter = new LevelLogFilter();
     isPaused = false;
+ 
   }
-
 
   @SuppressWarnings("unchecked")
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
-
+    
     notificationManager =
-        (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 
     List<rosgraph_msgs.Log> data = new ArrayList<rosgraph_msgs.Log>();
 
     final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
 
     adapter = new LogAdapter(this, R.layout.list, data);
-
+    adapter.setFilter(filter);
     listView = (RosListView<rosgraph_msgs.Log>)findViewById(R.id.listView);
     listView.setTopicName("rosout_agg");
     listView.setMessageType(rosgraph_msgs.Log._TYPE);
@@ -87,7 +90,7 @@ public class MainActivity extends RosActivity {
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     boolean ret = super.onCreateOptionsMenu(menu);
-
+    
     menu.add(0, Menu.FIRST, Menu.NONE, "Clear")
         .setIcon(android.R.drawable.ic_menu_close_clear_cancel);
     menu.add(0, Menu.FIRST + 1, Menu.NONE , "Set Level")
@@ -110,26 +113,26 @@ public class MainActivity extends RosActivity {
         alertDialogBuilder.setMultiChoiceItems(LogUtil.getLevelStrings(),
                                                bools,
           new OnMultiChoiceClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which,
-                                        boolean isChecked) {
-                      bools[which] = isChecked;
-                        }
+			@Override
+			public void onClick(DialogInterface dialog, int which,
+					boolean isChecked) {
+	              bools[which] = isChecked;		
+			}
           });
-        // Set boolean values to filter
+        // Set boolean values to filter 
         alertDialogBuilder.setPositiveButton("OK",
           new OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                      filter.setBooleanArray(bools);
-                        }
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+	              filter.setBooleanArray(bools);
+			}
           });
         // cancel settings
         alertDialogBuilder.setNegativeButton("Cancel",
                 new OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
+      			@Override
+      			public void onClick(DialogInterface dialog, int which) {
+      			}
                 });
 
         alertDialogBuilder
@@ -139,20 +142,20 @@ public class MainActivity extends RosActivity {
 
         return true;
       case Menu.FIRST + 2:
-        if (this.isPaused) {
-                // resume
-                adapter.setFilter(filter);
-                isPaused = false;
-        } else {
-                adapter.setFilter(new LogFilter() {
-                                @Override
-                                public boolean UseLog(Log log) {
-                                        return false;
-                                }
-                });
-                isPaused = true;
-        }
-        return true;
+    	if (this.isPaused) {
+    		// resume
+    		adapter.setFilter(filter);
+    		isPaused = false;
+    	} else {
+    		adapter.setFilter(new LogFilter() {
+				@Override
+				public boolean UseLog(Log log) {
+					return false;
+				}
+    		});
+    		isPaused = true;
+    	}
+    	return true;
     }
     return false;
   }
