@@ -1,4 +1,7 @@
 package com.ogutti.ros.android.console;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
@@ -37,6 +40,13 @@ public class LogPublisher extends AbstractNodeMain {
           log.setLevel(rosgraph_msgs.Log.INFO);
         }
         log.setMsg("hoge" + sequenceNumber);
+        log.setLine(100);
+        log.setFunction("func1");
+        List<String> topics = new ArrayList<String>();
+        topics.add("/toipc1");
+        topics.add("/toipc2");
+        log.setName("test_node");
+        log.setTopics(topics);
         publisher.publish(log);
         sequenceNumber++;
         Thread.sleep(1000);

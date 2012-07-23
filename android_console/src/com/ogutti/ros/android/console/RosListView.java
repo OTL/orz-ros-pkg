@@ -1,7 +1,9 @@
 package com.ogutti.ros.android.console;
 
-// view can not be updated by other thread.
-// most simple way is make the view as a node.
+/*
+ * view can not be updated by other thread.
+ * most simple way is make the view as a node.
+ */
 
 import org.ros.message.MessageListener;
 import org.ros.namespace.GraphName;
@@ -17,6 +19,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 
+/**
+ *
+ * @author Takashi Ogura <t.ogura@gmail.com>
+ *
+ * @param <T> message class
+ */
 public class RosListView<T> extends ListView implements NodeMain {
 
   private String topicName;
@@ -43,6 +51,14 @@ public class RosListView<T> extends ListView implements NodeMain {
     this.messageType = messageType;
   }
 
+  /**
+   * set the limit. if limit is less than 0, it is unlimited.
+   * @param limit number of shown messages in list view
+   */
+  public void setBufferLimit(int limit) {
+          this.bufferLimit = limit;
+  }
+
   @Override
   public GraphName getDefaultNodeName() {
     return new GraphName("android_console/ros_list_view");
@@ -61,6 +77,12 @@ public class RosListView<T> extends ListView implements NodeMain {
             @Override
             public void run() {
               arrayAdapter.add(message);
+              smoothScrollToPosition(getCount() - 1);
+              if (bufferLimit >= 0) {
+                while (getCount() > bufferLimit) {
+                  arrayAdapter.remove(arrayAdapter.getItem(0));
+                }
+              }
             }
             });
           postInvalidate();

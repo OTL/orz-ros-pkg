@@ -4,6 +4,17 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="gen"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/org.ros.android.android_gingerbread_mr1.MasterChooser"/>
+	<classpathentry kind="lib" path="/home/ogutti/android-sdk-linux/platforms/android-10/android.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://developer.android.com/reference/"/>
+		</attributes>
+		<accessrules>
+			<accessrule kind="nonaccessible" pattern="com/android/internal/**"/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry kind="lib" path="/org.ros.android.android_gingerbread_mr1.MasterChooser/bin/org.ros.android.android_gingerbread_mr1.masterchooser.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

@@ -3,12 +3,28 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="horizontal">
-    <TextView
-        android:id="@+id/console_type_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+
     <TextView
         android:id="@+id/console_message_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="8"
+        />
+
+<View
+    android:id="@+id/console_separator"
+    android:layout_width="1dp"
+    android:layout_height="fill_parent"
+    android:layout_marginRight="2dp"
+    android:background="@color/separator_color" >
+
+</View>
+    
+    <TextView
+        android:id="@+id/console_node_text"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        />
+
 </LinearLayout>

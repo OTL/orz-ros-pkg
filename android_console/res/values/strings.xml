@@ -2,5 +2,9 @@
 <resources>
 
     <string name="app_name">RosConsole</string>
+    <string name="header_message">Message</string>
+    <string name="header_node">Node</string>
+    <color name="header_color">#222244</color>
+    <color name="separator_color">#DDCCCCCC</color>
 
 </resources>

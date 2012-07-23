@@ -12,7 +12,12 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-
+/**
+ * ListAdapter of rosgraph_msgs.Log
+ *
+ * @author Takashi Ogura <t.ogura@gmail.com>
+ *
+ */
 public class LogAdapter extends ArrayAdapter<rosgraph_msgs.Log> {
   private LayoutInflater layoutInflater_;
 
@@ -25,23 +30,22 @@ public class LogAdapter extends ArrayAdapter<rosgraph_msgs.Log> {
 
   @Override
   public View getView(int position, View convertView, ViewGroup parent) {
-    // 特定の行(position)のデータを得る
-    Log.d("RosArrayAdapter", "getView");
     rosgraph_msgs.Log item = (rosgraph_msgs.Log)getItem(position);
 
-    Log.d("RosArrayAdapter", "getItem");
-
-    // convertViewは使い回しされている可能性があるのでnullの時だけ新しく作る
+    // create if it is null
     if (null == convertView) {
       convertView = layoutInflater_.inflate(R.layout.list, null);
     }
-    Log.d("RosArrayAdapter", "convertView null end");
-    TextView typeTextView = (TextView)convertView.findViewById(R.id.console_type_text);
-    typeTextView.setText("");
+
+    // set message text
     TextView messageTextView = (TextView)convertView.findViewById(R.id.console_message_text);
     messageTextView.setText(item.getMsg());
     messageTextView.setTextColor(LogUtil.levelToColor(item.getLevel()));
-    Log.d("RosArrayAdapter", "getView end");
+
+    // set node text
+    TextView typeTextView = (TextView)convertView.findViewById(R.id.console_node_text);
+    typeTextView.setText(item.getName());
+
     return convertView;
   }
 
