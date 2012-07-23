@@ -32,32 +32,47 @@ import com.ogutti.ros.android.console.RosListView;
 
 
 /**
+ * rxconsole (android version) main Activity
+ *
  * @author t.ogura@gmain.com (Takashi Ogura)
  */
 public class MainActivity extends RosActivity {
 
+  /*  private LogPublisher talker; */
+
+  /** view of log messages */
   private RosListView<rosgraph_msgs.Log> listView;
+  /** adapter for convert log message to ListView  */
   private LogAdapter adapter;
-/*  private LogPublisher talker; */
+  /** use notification for more than Error message */
   private NotificationManager notificationManager;
+  /** filter of message */
   private LevelLogFilter filter;
+  /** state of pause/play. */
   private boolean isPaused;
 
+  /**
+   * initialize activity and filter
+   */
   public MainActivity() {
     super("rxconsole", "rxconsole");
     this.filter = new LevelLogFilter();
     isPaused = false;
- 
+
   }
 
+  /**
+   * create ListView (ROS node)
+   * @param savedInstanceState
+   */
   @SuppressWarnings("unchecked")
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
-    
+
     notificationManager =
-            (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 
     List<rosgraph_msgs.Log> data = new ArrayList<rosgraph_msgs.Log>();
 
@@ -72,25 +87,31 @@ public class MainActivity extends RosActivity {
     listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view,
-                int position, long id) {
-            ListView listView = (ListView) parent;
-            // クリックされたアイテムを取得します
-            rosgraph_msgs.Log log = (rosgraph_msgs.Log) listView.getItemAtPosition(position);
-            alertDialogBuilder
-                .setTitle("Node: " + log.getName())
-                .setMessage("Location: " + log.getFile() + ":in `"  + log.getFunction() + "':" + log.getLine() + "\n"
-                            + "Severity: " + LogUtil.levelToString(log.getLevel()) + "\n\n"
-                            + log.getMsg())
-                .setPositiveButton("OK", null)
-                .show();
+                                int position, long id) {
+          ListView listView = (ListView) parent;
+          // クリックされたアイテムを取得します
+          rosgraph_msgs.Log log = (rosgraph_msgs.Log) listView.getItemAtPosition(position);
+          alertDialogBuilder
+              .setTitle("Node: " + log.getName())
+              .setMessage("Location: " + log.getFile() + ":in `"  + log.getFunction() + "':" + log.getLine() + "\n"
+                          + "Severity: " + LogUtil.levelToString(log.getLevel()) + "\n\n"
+                          + log.getMsg())
+              .setPositiveButton("OK", null)
+              .show();
         }
-    });
+      });
   }
 
+  /**
+   * Creation of Menu (Clear/SetLevel/Pause)
+   *
+   * @param menu
+   * @return
+   */
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     boolean ret = super.onCreateOptionsMenu(menu);
-    
+
     menu.add(0, Menu.FIRST, Menu.NONE, "Clear")
         .setIcon(android.R.drawable.ic_menu_close_clear_cancel);
     menu.add(0, Menu.FIRST + 1, Menu.NONE , "Set Level")
@@ -100,6 +121,13 @@ public class MainActivity extends RosActivity {
     return ret;
   }
 
+  /**
+   * Callback of log item selection.
+   * Shows alert dialog.
+   *
+   * @param item clicked item
+   * @return
+   */
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     super.onOptionsItemSelected(item);
@@ -112,28 +140,28 @@ public class MainActivity extends RosActivity {
         final boolean[] bools = this.filter.getBooleanArray();
         alertDialogBuilder.setMultiChoiceItems(LogUtil.getLevelStrings(),
                                                bools,
-          new OnMultiChoiceClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which,
-					boolean isChecked) {
-	              bools[which] = isChecked;		
-			}
-          });
-        // Set boolean values to filter 
+                                               new OnMultiChoiceClickListener() {
+                                                 @Override
+                                                 public void onClick(DialogInterface dialog, int which,
+                                                                     boolean isChecked) {
+                                                   bools[which] = isChecked;
+                                                 }
+                                               });
+        // Set boolean values to filter
         alertDialogBuilder.setPositiveButton("OK",
-          new OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-	              filter.setBooleanArray(bools);
-			}
-          });
+                                             new OnClickListener() {
+                                               @Override
+                                               public void onClick(DialogInterface dialog, int which) {
+                                                 filter.setBooleanArray(bools);
+                                               }
+                                             });
         // cancel settings
         alertDialogBuilder.setNegativeButton("Cancel",
-                new OnClickListener() {
-      			@Override
-      			public void onClick(DialogInterface dialog, int which) {
-      			}
-                });
+                                             new OnClickListener() {
+                                               @Override
+                                               public void onClick(DialogInterface dialog, int which) {
+                                               }
+                                             });
 
         alertDialogBuilder
             .setTitle("Select Levels")
@@ -142,48 +170,61 @@ public class MainActivity extends RosActivity {
 
         return true;
       case Menu.FIRST + 2:
-    	if (this.isPaused) {
-    		// resume
-    		adapter.setFilter(filter);
-    		isPaused = false;
-    	} else {
-    		adapter.setFilter(new LogFilter() {
-				@Override
-				public boolean UseLog(Log log) {
-					return false;
-				}
-    		});
-    		isPaused = true;
-    	}
-    	return true;
+        if (this.isPaused) {
+          // resume
+          adapter.setFilter(filter);
+          isPaused = false;
+        } else {
+          adapter.setFilter(new LogFilter() {
+              @Override
+              public boolean UseLog(Log log) {
+                return false;
+              }
+            });
+          isPaused = true;
+        }
+        return true;
     }
     return false;
   }
 
+  /**
+   * notification callback. this is called by a click.
+   *
+   * @param log clicked message
+   */
   public void sendNotification(rosgraph_msgs.Log log) {
-            String messageForShow = "ROS " + LogUtil.levelToString(log.getLevel());
-            Notification n = new Notification(android.R.drawable.ic_dialog_alert,
-                                              messageForShow + " Happend",
-                                              System.currentTimeMillis());
-            Intent intent = new Intent(this,
-                                       com.ogutti.ros.android.console.MainActivity.class);
-            PendingIntent pending = PendingIntent.getActivity(this,
-                                                         0,
-                                                         intent,
-                                                         PendingIntent.FLAG_CANCEL_CURRENT);
+    String messageForShow = "ROS " + LogUtil.levelToString(log.getLevel());
+    Notification n = new Notification(android.R.drawable.ic_dialog_alert,
+                                      messageForShow + " Happend",
+                                      System.currentTimeMillis());
+    Intent intent = new Intent(this,
+                               com.ogutti.ros.android.console.MainActivity.class);
+    PendingIntent pending = PendingIntent.getActivity(this,
+                                                      0,
+                                                      intent,
+                                                      PendingIntent.FLAG_CANCEL_CURRENT);
 
-            n.setLatestEventInfo(getApplicationContext(),
-                                 messageForShow,
-                                 log.getName() + ": " + log.getMsg(),
-                                 pending);
-            n.flags = Notification.FLAG_AUTO_CANCEL;
-            notificationManager.notify(R.string.app_name, n);
+    n.setLatestEventInfo(getApplicationContext(),
+                         messageForShow,
+                         log.getName() + ": " + log.getMsg(),
+                         pending);
+    n.flags = Notification.FLAG_AUTO_CANCEL;
+    notificationManager.notify(R.string.app_name, n);
   }
 
+  /**
+   * clear all notifications
+   */
   public void clearNotification() {
     notificationManager.cancelAll();
   }
 
+  /**
+   * initialize ROS instances. listView contains subscriber of /rosout_agg
+   *
+   * @param nodeMainExecutor ROS node
+   */
   @Override
   protected void init(NodeMainExecutor nodeMainExecutor) {
     NodeConfiguration nodeConfiguration =
@@ -191,11 +232,11 @@ public class MainActivity extends RosActivity {
             InetAddressFactory.newNonLoopback().getHostAddress(),
             getMasterUri());
     /*
-    talker = new LogPublisher();
+      talker = new LogPublisher();
 
-    nodeMainExecutor.execute(talker,
-                             nodeConfiguration.setNodeName("talker"));
-     */
+      nodeMainExecutor.execute(talker,
+      nodeConfiguration.setNodeName("talker"));
+    */
     nodeMainExecutor.execute(listView,
                              nodeConfiguration.setNodeName("android_console"));
   }

@@ -1,4 +1,5 @@
 package com.ogutti.ros.android.console;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +9,12 @@ import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 
+/**
+ * this is used for debug of android rxconsole.
+ *
+ * @author Takashi Ogura <t.ogura@gmail.com>
+ *
+ */
 public class LogPublisher extends AbstractNodeMain {
 
   @Override
