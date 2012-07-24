@@ -1,6 +1,6 @@
 package com.ogutti.ros.android.console;
 
-/* 
+/*
  * view can not be updated by other thread.
  * most simple way is make the view as a node.
  */
@@ -18,18 +18,32 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 /**
- * 
+ *
  * @author Takashi Ogura <t.ogura@gmail.com>
  *
  * @param <T> message class
  */
 public class RosListView<T> extends ListView implements NodeMain {
 
+  /**
+   * name of topic
+   */
   private String topicName;
+  /**
+   * type of topic
+   */
   private String messageType;
 
-  private int bufferLimit = 1000;
-  
+  /**
+   * buffer size of listview
+   */
+  private int listBufferSize = 1000;
+
+  /**
+   * buffer size of /rosout_agg subscription
+   */
+  private final int subscriberBufferSize = 1000;
+
   public RosListView(Context context) {
     super(context);
   }
@@ -42,27 +56,37 @@ public class RosListView<T> extends ListView implements NodeMain {
     super(context, attrs, defStyle);
   }
 
+  /**
+   * set topic name. you have to call this before use.
+   *
+   * @param topicName name of topic
+   */
   public void setTopicName(String topicName) {
     this.topicName = topicName;
   }
 
+  /**
+   * type string of the topic
+   *
+   * @param messageType type string of topic
+   */
   public void setMessageType(String messageType) {
     this.messageType = messageType;
   }
-  
+
   /**
    * set the limit. if limit is less than 0, it is unlimited.
    * @param limit number of shown messages in list view
    */
   public void setBufferLimit(int limit) {
-	  this.bufferLimit = limit;
+          this.listBufferSize = limit;
   }
 
   @Override
   public GraphName getDefaultNodeName() {
-    return new GraphName("android_console/ros_list_view");
+    return GraphName.of("ros_list_view");
   }
-  
+
   @SuppressWarnings("unchecked")
   @Override
   public void onStart(ConnectedNode connectedNode) {
@@ -78,16 +102,17 @@ public class RosListView<T> extends ListView implements NodeMain {
             public void run() {
               arrayAdapter.add(message);
               smoothScrollToPosition(getCount() - 1);
-              if (bufferLimit >= 0) {
-                while (getCount() > bufferLimit) {
-              	  arrayAdapter.remove(arrayAdapter.getItem(0));
+              if (listBufferSize >= 0) {
+                while (getCount() > listBufferSize) {
+                  arrayAdapter.remove(arrayAdapter.getItem(0));
                 }
               }
             }
             });
           postInvalidate();
         }
-      }});
+      }},
+      subscriberBufferSize);
   }
 
   @Override

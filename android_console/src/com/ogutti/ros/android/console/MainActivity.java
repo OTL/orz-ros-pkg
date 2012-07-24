@@ -93,9 +93,13 @@ public class MainActivity extends RosActivity {
           rosgraph_msgs.Log log = (rosgraph_msgs.Log) listView.getItemAtPosition(position);
           alertDialogBuilder
               .setTitle("Node: " + log.getName())
-              .setMessage("Location: " + log.getFile() + ":in `"  + log.getFunction() + "':" + log.getLine() + "\n"
-                          + "Severity: " + LogUtil.levelToString(log.getLevel()) + "\n\n"
-                          + log.getMsg())
+              .setMessage(
+                  "Time: " + log.getHeader().getStamp().toString() + "\n" +
+                  "Severity: " + LogUtil.levelToString(log.getLevel()) + "\n" +
+                  "Location: " + log.getFile() + ":in `"  + log.getFunction() +
+                  "':" + log.getLine() + "\n" +
+                  "Published Topics: " + log.getTopics().toString() + "\n\n" +
+                  log.getMsg())
               .setPositiveButton("OK", null)
               .show();
         }
@@ -198,12 +202,11 @@ public class MainActivity extends RosActivity {
     Notification n = new Notification(android.R.drawable.ic_dialog_alert,
                                       messageForShow + " Happend",
                                       System.currentTimeMillis());
-    Intent intent = new Intent(this,
-                               com.ogutti.ros.android.console.MainActivity.class);
-    PendingIntent pending = PendingIntent.getActivity(this,
-                                                      0,
-                                                      intent,
-                                                      PendingIntent.FLAG_CANCEL_CURRENT);
+    PendingIntent pending = PendingIntent.getActivity(
+        this,
+        0,
+        new Intent(),
+        PendingIntent.FLAG_CANCEL_CURRENT);
 
     n.setLatestEventInfo(getApplicationContext(),
                          messageForShow,
