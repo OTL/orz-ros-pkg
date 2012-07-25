@@ -37,12 +37,12 @@ public class RosListView<T> extends ListView implements NodeMain {
   /**
    * buffer size of listview
    */
-  private int listBufferSize = 1000;
+  private int listBufferSize = 500;
 
   /**
    * buffer size of /rosout_agg subscription
    */
-  private final int subscriberBufferSize = 1000;
+  private final int subscriberBufferSize = 100;
 
   public RosListView(Context context) {
     super(context);
@@ -101,7 +101,8 @@ public class RosListView<T> extends ListView implements NodeMain {
             @Override
             public void run() {
               arrayAdapter.add(message);
-              smoothScrollToPosition(getCount() - 1);
+              /* smoothScrollToPosition does not work correctly*/
+              setSelection(getCount()-1);
               if (listBufferSize >= 0) {
                 while (getCount() > listBufferSize) {
                   arrayAdapter.remove(arrayAdapter.getItem(0));

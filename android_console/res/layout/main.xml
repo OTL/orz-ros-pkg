@@ -51,6 +51,7 @@
   </LinearLayout>
   <com.ogutti.ros.android.console.RosListView
       android:id="@+id/listView"
+      android:fastScrollEnabled="true"
       android:layout_height="wrap_content"
       android:layout_width="match_parent"
       android:textSize="12dip"/>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">RosConsole</string>
+    <string name="app_name">rxconsole</string>
     <string name="header_message">Message</string>
     <string name="header_node">Node</string>
     <color name="header_color">#222244</color>

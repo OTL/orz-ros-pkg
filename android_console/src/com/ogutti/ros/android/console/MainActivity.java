@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
@@ -50,6 +51,11 @@ public class MainActivity extends RosActivity {
   private LevelLogFilter filter;
   /** state of pause/play. */
   private boolean isPaused;
+
+  private static final int CLEAR_MENU_ID = Menu.FIRST;
+  private static final int SETTING_MENU_ID = Menu.FIRST + 1;
+  private static final int PAUSE_MENU_ID = Menu.FIRST + 2;
+  private static final int RESUME_MENU_ID = Menu.FIRST + 3;
 
   /**
    * initialize activity and filter
@@ -116,14 +122,26 @@ public class MainActivity extends RosActivity {
   public boolean onCreateOptionsMenu(Menu menu) {
     boolean ret = super.onCreateOptionsMenu(menu);
 
-    menu.add(0, Menu.FIRST, Menu.NONE, "Clear")
+    menu.add(0, CLEAR_MENU_ID, Menu.NONE, "Clear")
         .setIcon(android.R.drawable.ic_menu_close_clear_cancel);
-    menu.add(0, Menu.FIRST + 1, Menu.NONE , "Set Level")
+    menu.add(0, SETTING_MENU_ID, Menu.NONE , "Set Level")
         .setIcon(android.R.drawable.ic_menu_preferences);
-    menu.add(0, Menu.FIRST + 2, Menu.NONE, "Pause")
+    menu.add(0, PAUSE_MENU_ID, Menu.NONE, "Pause")
         .setIcon(android.R.drawable.ic_media_pause);
+    menu.add(0, RESUME_MENU_ID, Menu.NONE, "Resume")
+        .setIcon(android.R.drawable.ic_media_play);
+
     return ret;
   }
+
+  @Override
+  public boolean onPrepareOptionsMenu(Menu menu) {
+    menu.findItem(PAUSE_MENU_ID).setVisible(!isPaused);
+    menu.findItem(RESUME_MENU_ID).setVisible(isPaused);
+
+    return super.onPrepareOptionsMenu(menu);
+  }
+
 
   /**
    * Callback of log item selection.
@@ -136,10 +154,10 @@ public class MainActivity extends RosActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     super.onOptionsItemSelected(item);
     switch(item.getItemId()){
-      case Menu.FIRST:
+      case CLEAR_MENU_ID:
         adapter.clear();
-        return true;
-      case Menu.FIRST + 1:
+        break;
+      case SETTING_MENU_ID:
         final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         final boolean[] bools = this.filter.getBooleanArray();
         alertDialogBuilder.setMultiChoiceItems(LogUtil.getLevelStrings(),
@@ -172,24 +190,27 @@ public class MainActivity extends RosActivity {
             .create()
             .show();
 
-        return true;
-      case Menu.FIRST + 2:
-        if (this.isPaused) {
-          // resume
-          adapter.setFilter(filter);
-          isPaused = false;
-        } else {
-          adapter.setFilter(new LogFilter() {
-              @Override
-              public boolean UseLog(Log log) {
-                return false;
-              }
-            });
-          isPaused = true;
-        }
-        return true;
+        break;
+      case PAUSE_MENU_ID:
+        adapter.setFilter(new LogFilter() {
+            @Override
+            public boolean UseLog(Log log) {
+              return false;
+            }
+          });
+        Toast.makeText(this, "Paused", Toast.LENGTH_SHORT).show();
+        isPaused = true;
+        break;
+      case RESUME_MENU_ID:
+        adapter.setFilter(filter);
+        Toast.makeText(this, "Resumed", Toast.LENGTH_SHORT).show();
+        isPaused = false;
+        break;
+      default:
+        android.util.Log.e("android_console", "MenuCase error");
+        break;
     }
-    return false;
+    return true;
   }
 
   /**
