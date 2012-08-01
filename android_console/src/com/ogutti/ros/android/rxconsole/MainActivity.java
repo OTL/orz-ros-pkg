@@ -1,7 +1,12 @@
-package com.ogutti.ros.android.console;
+package com.ogutti.ros.android.rxconsole;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -19,17 +24,18 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
-
 import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
+import org.ros.exception.RosRuntimeException;
 
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
 import rosgraph_msgs.Log;
 
-import com.ogutti.ros.android.console.LogUtil;
-import com.ogutti.ros.android.console.RosListView;
+import com.google.common.collect.Lists;
+import com.ogutti.ros.android.rxconsole.LogUtil;
+import com.ogutti.ros.android.rxconsole.RosListView;
 
 
 /**
@@ -52,10 +58,14 @@ public class MainActivity extends RosActivity {
   /** state of pause/play. */
   private boolean isPaused;
 
+  private String hostName = null;
+
   private static final int CLEAR_MENU_ID = Menu.FIRST;
   private static final int SETTING_MENU_ID = Menu.FIRST + 1;
   private static final int PAUSE_MENU_ID = Menu.FIRST + 2;
   private static final int RESUME_MENU_ID = Menu.FIRST + 3;
+  private static final int SELECT_IP_MENU_ID = Menu.FIRST + 4;
+private static final int MASTER_CHOOSER_REQUEST_CODE = 0;
 
   /**
    * initialize activity and filter
@@ -130,7 +140,8 @@ public class MainActivity extends RosActivity {
         .setIcon(android.R.drawable.ic_media_pause);
     menu.add(0, RESUME_MENU_ID, Menu.NONE, "Resume")
         .setIcon(android.R.drawable.ic_media_play);
-
+    menu.add(0, SELECT_IP_MENU_ID, Menu.NONE, "Select IP")
+        .setIcon(android.R.drawable.ic_menu_manage);
     return ret;
   }
 
@@ -160,30 +171,33 @@ public class MainActivity extends RosActivity {
       case SETTING_MENU_ID:
         final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         final boolean[] bools = this.filter.getBooleanArray();
-        alertDialogBuilder.setMultiChoiceItems(LogUtil.getLevelStrings(),
-                                               bools,
-                                               new OnMultiChoiceClickListener() {
-                                                 @Override
-                                                 public void onClick(DialogInterface dialog, int which,
-                                                                     boolean isChecked) {
-                                                   bools[which] = isChecked;
-                                                 }
-                                               });
+        alertDialogBuilder.setMultiChoiceItems(
+            LogUtil.getLevelStrings(),
+            bools,
+            new OnMultiChoiceClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which,
+                                  boolean isChecked) {
+                bools[which] = isChecked;
+              }
+            });
         // Set boolean values to filter
-        alertDialogBuilder.setPositiveButton("OK",
-                                             new OnClickListener() {
-                                               @Override
-                                               public void onClick(DialogInterface dialog, int which) {
-                                                 filter.setBooleanArray(bools);
-                                               }
-                                             });
+        alertDialogBuilder.setPositiveButton(
+            "OK",
+            new OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                filter.setBooleanArray(bools);
+              }
+            });
         // cancel settings
-        alertDialogBuilder.setNegativeButton("Cancel",
-                                             new OnClickListener() {
-                                               @Override
-                                               public void onClick(DialogInterface dialog, int which) {
-                                               }
-                                             });
+        alertDialogBuilder.setNegativeButton(
+            "Cancel",
+            new OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+              }
+            });
 
         alertDialogBuilder
             .setTitle("Select Levels")
@@ -207,7 +221,7 @@ public class MainActivity extends RosActivity {
         isPaused = false;
         break;
       default:
-        android.util.Log.e("android_console", "MenuCase error");
+        android.util.Log.e("android_rxconsole", "MenuCase error");
         break;
     }
     return true;
@@ -244,6 +258,25 @@ public class MainActivity extends RosActivity {
     notificationManager.cancelAll();
   }
 
+  /*
+   * from rosjava (src/main/java/org/ros/address/InetAddressFactory.java)
+   */
+  private Collection<InetAddress> getAllInetAddresses() {
+    List<NetworkInterface> networkInterfaces;
+    try {
+      networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces
+                                           ());
+    } catch (SocketException e) {
+      throw new RosRuntimeException(e);
+    }
+    List<InetAddress> inetAddresses = Lists.newArrayList();
+    for (NetworkInterface networkInterface : networkInterfaces) {
+      inetAddresses.addAll(Collections.list(networkInterface.getInetAddresses())
+                           );
+    }
+    return inetAddresses;
+  }
+
   /**
    * initialize ROS instances. listView contains subscriber of /rosout_agg
    *
@@ -251,17 +284,46 @@ public class MainActivity extends RosActivity {
    */
   @Override
   protected void init(NodeMainExecutor nodeMainExecutor) {
-    NodeConfiguration nodeConfiguration =
-        NodeConfiguration.newPublic(
-            InetAddressFactory.newNonLoopback().getHostAddress(),
-            getMasterUri());
-    /*
-      talker = new LogPublisher();
+    // support of multi ip addressed device
+    final List<String> ip_addresses = new ArrayList<String>();
+    for (InetAddress address : getAllInetAddresses()) {
+      if ((!address.isLoopbackAddress()) &&
+          (address.getAddress().length == 4) // ipv4
+          ) {
+        ip_addresses.add(address.getHostAddress());
+      }
+    }
+    if (ip_addresses.size() > 1) {
+      runOnUiThread(new Runnable() {
+          public void run() {
+            new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Select Device IP")
+                .setItems(ip_addresses.toArray(new CharSequence[ip_addresses.size()]),
+                          new DialogInterface.OnClickListener(){
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
 
-      nodeMainExecutor.execute(talker,
-      nodeConfiguration.setNodeName("talker"));
-    */
+                              hostName = ip_addresses.get(which);
+                            }
+                          })
+                .show();
+          }
+        });
+      while (hostName == null) {
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+      }
+    } else {
+      hostName = InetAddressFactory.newNonLoopback().getHostAddress();
+    }
+
+    NodeConfiguration nodeConfiguration =
+        NodeConfiguration.newPublic(hostName, getMasterUri());
+
     nodeMainExecutor.execute(listView,
-                             nodeConfiguration.setNodeName("android_console"));
+                             nodeConfiguration.setNodeName("android_rxconsole"));
   }
 }

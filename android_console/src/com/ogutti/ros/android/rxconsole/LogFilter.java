@@ -1,4 +1,4 @@
-package com.ogutti.ros.android.console;
+package com.ogutti.ros.android.rxconsole;
 
 /**
  *  Interface class for filtering log messages

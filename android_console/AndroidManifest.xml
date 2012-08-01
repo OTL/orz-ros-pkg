@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ogutti.ros.android.console"
-    android:versionCode="1"
-    android:versionName="1.0.0" >
+    package="com.ogutti.ros.android.rxconsole"
+    android:versionCode="2"
+    android:versionName="1.1.0" >
 
     <uses-sdk android:minSdkVersion="10" />
 
@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:debuggable="false">
         <activity
-            android:name="com.ogutti.ros.android.console.MainActivity"
+            android:name="com.ogutti.ros.android.rxconsole.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

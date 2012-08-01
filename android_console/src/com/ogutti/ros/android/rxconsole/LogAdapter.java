@@ -1,8 +1,8 @@
-package com.ogutti.ros.android.console;
+package com.ogutti.ros.android.rxconsole;
 
 import java.util.List;
 
-import com.ogutti.ros.android.console.LogUtil;
+import com.ogutti.ros.android.rxconsole.LogUtil;
 
 import android.content.Context;
 import android.view.LayoutInflater;

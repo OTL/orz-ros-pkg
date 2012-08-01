@@ -1,4 +1,4 @@
-package com.ogutti.ros.android.console;
+package com.ogutti.ros.android.rxconsole;
 
 /**
  * Utility class for rosgraph_msgs/Log message

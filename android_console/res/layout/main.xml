@@ -49,7 +49,7 @@
 	android:text="@string/header_node" />
 
   </LinearLayout>
-  <com.ogutti.ros.android.console.RosListView
+  <com.ogutti.ros.android.rxconsole.RosListView
       android:id="@+id/listView"
       android:fastScrollEnabled="true"
       android:layout_height="wrap_content"
