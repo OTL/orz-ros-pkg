@@ -64,8 +64,6 @@ public class MainActivity extends RosActivity {
   private static final int SETTING_MENU_ID = Menu.FIRST + 1;
   private static final int PAUSE_MENU_ID = Menu.FIRST + 2;
   private static final int RESUME_MENU_ID = Menu.FIRST + 3;
-  private static final int SELECT_IP_MENU_ID = Menu.FIRST + 4;
-private static final int MASTER_CHOOSER_REQUEST_CODE = 0;
 
   /**
    * initialize activity and filter
@@ -140,8 +138,6 @@ private static final int MASTER_CHOOSER_REQUEST_CODE = 0;
         .setIcon(android.R.drawable.ic_media_pause);
     menu.add(0, RESUME_MENU_ID, Menu.NONE, "Resume")
         .setIcon(android.R.drawable.ic_media_play);
-    menu.add(0, SELECT_IP_MENU_ID, Menu.NONE, "Select IP")
-        .setIcon(android.R.drawable.ic_menu_manage);
     return ret;
   }
 
