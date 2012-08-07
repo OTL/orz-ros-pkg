@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wxconsole</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+	padding-top: 60px;
+	padding-bottom: 40px;
+      }
+      .sidebar-nav {
+	padding: 9px 0;
+      }
+    </style>
+    <script type="text/javascript" src="js/jquery-1.7.2.js"></script>
+    <script type="text/javascript" src="js/bootstrap.js"></script>
+    <script type="text/javascript" src="js/bootstrap-button.js"></script>
+    <script type="text/javascript" src="js/bootstrap-alert.js"></script>
+
+    <script type="text/javascript" src="ros.js"></script>
+    <script type="text/javascript" src="wxconsole.js"></script>
+  </head>
+  <body>
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+	<div class="container-fluid">
+	  <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+	    <span class="icon-bar"></span>
+	    <span class="icon-bar"></span>
+	    <span class="icon-bar"></span>
+	  </a>
+	  <a class="brand" href="#">wxconsole</a>
+
+	  <form class="navbar-form pull-left">
+	    <div class="input-append">
+	      <input type="text" id="hostname" class="span2" placeholder="rosbridge's host" value="localhost"><button type="button" class="btn" id="connect">connect</button>
+	    </div>
+	  </form>
+	</div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+
+      <div class="row">
+	<div class="span3.5">
+	  <div class="btn-group" id="level_buttons"
+	       data-toggle="buttons-checkbox">
+	    <button class="btn btn-primary" id="Debug">Debug</button>
+	    <button class="btn btn-primary" id="Info">Info</button>
+	    <button class="btn btn-primary" id="Warn">Warn</button>
+	    <button class="btn btn-primary" id="Error">Error</button>
+	    <button class="btn btn-primary" id="Fatal">Fatal</button>
+	  </div>
+	</div>
+	<div class="span2">
+	  <button class="btn btn-info" id="pause_button"
+		  data-toggle="button">
+	    <i class="icon-pause"></i>Pause</button>
+	</div>
+      </div>
+
+      <div class="row">
+	<div class="span11">
+	  <table class="table table-striped table-condensed" id="rosout_table">
+	    <thead>
+	      <tr>
+		<th width="400">Message</th>
+		<th>Severity</th>
+		<th>Node</th>
+		<th>Time</th>
+		<th>Topics</th>
+		<th>Location</th>
+	      </tr>
+	    </thead>
+	    <tbody>
+	    </tbody>
+	  </table>
+	</div>
+      </div>
+
+      <div class="row">
+	<div class="span6">
+
+	  <div id="message">
+	  </div>
+	  <footer>
+	    <p>&copy; OTL 2012</p>
+	  </footer>
+	</div>
+      </div>
+    </div>
+  </body>
+</html>
