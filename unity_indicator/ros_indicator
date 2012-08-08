@@ -190,7 +190,7 @@ def main():
   ind.set_icon_theme_path(os.path.abspath(os.path.abspath(os.path.dirname(__file__))))
   ind.set_label("ROS")
   rospy.init_node('ros_indicator', disable_signals=True)
-  rospy.Subscriber('/rosout', rosgraph_msgs.msg.Log, rosout_callback, ind)
+  rospy.Subscriber('/rosout_agg', rosgraph_msgs.msg.Log, rosout_callback, ind)
 
   # not used now
   ind.set_attention_icon ("ros_attention")
