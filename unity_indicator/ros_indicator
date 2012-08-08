@@ -16,6 +16,7 @@ import os
 import pynotify
 import subprocess
 import socket
+import time
 
 import rosnode
 import rostopic
@@ -24,6 +25,8 @@ import rosparam
 import rosgraph
 import rosgraph_msgs
 import rospy
+
+g_master_process = None
 
 def notify_with_icon(name, body):
   """ Utility function for Notification"""
@@ -148,6 +151,13 @@ def launch_console(w):
   """ launch rxconsole"""
   subprocess.Popen(["rxconsole"])
 
+def exit_menu(w):
+  """exit this program"""
+  if g_master_process:
+    print 'waiting'
+    g_master_process.terminate()
+    g_master_process.wait()
+  sys.exit(0)
 
 def check_master():
   """ check if master is ok """
@@ -177,6 +187,19 @@ def clear_status(w, ind):
     ind.set_status(appindicator.STATUS_ACTIVE)
 
 def main():
+  global g_master_process
+  if len(sys.argv) > 1:
+    if sys.argv[1] == '--with-master':
+      if check_master():
+        print "master is already running"
+      else:
+        g_master_process = subprocess.Popen(["roscore"])
+        while not check_master():
+          time.sleep(1)
+    else:
+      print "usage: %s [--with-master]"%sys.argv[0]
+      sys.exit(0)
+
   if not check_master():
     print "plase launch roscore at first"
     sys.exit(1)
@@ -189,6 +212,7 @@ def main():
   ind.set_status (appindicator.STATUS_ACTIVE)
   ind.set_icon_theme_path(os.path.abspath(os.path.abspath(os.path.dirname(__file__))))
   ind.set_label("ROS")
+
   rospy.init_node('ros_indicator', disable_signals=True)
   rospy.Subscriber('/rosout_agg', rosgraph_msgs.msg.Log, rosout_callback, ind)
 
@@ -225,6 +249,12 @@ def main():
   # param menu
   param_menu = build_menu(menu, "param", selected_param_menu, ind)
   build_param_submenu(param_menu, [''])
+
+  # exit menu
+  menu.append(gtk.SeparatorMenuItem())
+  exit_item = gtk.MenuItem("exit")
+  exit_item.connect("activate", exit_menu)
+  menu.append(exit_item)
 
   menu.show_all()
 
