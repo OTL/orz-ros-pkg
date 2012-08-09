@@ -1,10 +1,13 @@
+// customize ROS Connection
+ros.Connection.prototype.close = function(func) {
+  this.socket.close();
+}
+
 var selected_level = {Debug:true, Info:true, Warn:true, Error:true, Fatal:true};
 var is_paused = false;
 var connection = null;
+var max_message_count = 1000;
 
-Connection.prototype.close = function(func) {
-  this.socket.close();
-}
 
 function getCookie(key) {
   var cookieString = document.cookie;
@@ -27,6 +30,7 @@ $(function() {
        $(".collapse").collapse();
        $('#level_buttons > .btn').button('toggle');
 
+       $('#rosout_table').css('table-layout', 'fixed');
        // set initial value from cookie
        if (getCookie("hostname") == "") {
 	 $('#hostname').val("localhost");
@@ -91,7 +95,7 @@ function rosInitialize(host) {
 				if ((!is_paused) && selected_level[levelToString(msg.level)]) {
 				  $('#rosout_table > tbody:last').append(
 				    '<tr>' +
-				      '<td width="400"><i class="' + levelToIcon(msg.level) +
+				      '<td><i class="' + levelToIcon(msg.level) +
 				      '"></i>' + 
 				      '<a data-toggle="collapse" data-target="#message' + message_count + '">' + msg.msg + '</a>' + 
 				      '<div id="message' + message_count + '" class="collapse">' + 
@@ -107,14 +111,12 @@ function rosInitialize(host) {
 				      levelToLabel(msg.level) + '">'
 				      + levelToString(msg.level) + '</span></td>' +
 				      '<td>' + msg.name + '</td>' +
-				      '<td>' + msg.header.stamp.secs + '.' +
-				      msg.header.stamp.nsecs + '</td>' +
-				      '<td width="100">' + msg.topics + '</td>' +
-				      '<td>' + msg.file + ':in `' + msg.function + "\':" + msg.line + '</td>' +
-
 				      '</tr>');
 				  $('html, body').animate({scrollTop: $("#message").offset().top}, 0);
 				  message_count++;
+				  if (message_count > max_message_count) {
+				    $('#rosout_table > tbody').contents().first().remove();
+				  }
 				}
 			      });
       } catch(error) {
@@ -128,9 +130,10 @@ function rosInitialize(host) {
       } catch (error) {
 	console.error('Problem subscribing!');
       }
-      $('#message').append('<div class="alert alert-block alert-success">'
+      $('#message').append('<div class="alert alert-block alert-success id="connection_alert">'
 			 + '<a class="close" data-dismiss="alert" href="#">x</a>'
 			 + '<strong>Success!</strong> rosbridge connection established</div>');
+      $('#message').children().delay(3000).fadeOut(1000);
       document.title = "wxconsole " + uri;
     });
 }
@@ -148,7 +151,7 @@ function levelToLabel(level) {
     return 'label-inverse';
   }
 
-  return ''
+  return '';
 }
 
 
