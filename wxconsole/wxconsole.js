@@ -24,7 +24,7 @@ $(function() {
     (function(){
        $('.nav-tabs').button();
        $(".alert").alert();
-       
+       $(".collapse").collapse();
        $('#level_buttons > .btn').button('toggle');
 
        // set initial value from cookie
@@ -65,7 +65,9 @@ function rosInitialize(host) {
   if (connection != null) {
     connection.close();
   }
-  connection = new ros.Connection("ws://" + host + ":9090");
+  var message_count = 0;
+  var uri = "ws://" + host + ":9090";
+  connection = new ros.Connection(uri);
 
   $('#rosout_table > tbody:last').html("");
 
@@ -90,7 +92,17 @@ function rosInitialize(host) {
 				  $('#rosout_table > tbody:last').append(
 				    '<tr>' +
 				      '<td width="400"><i class="' + levelToIcon(msg.level) +
-				      '"></i>' + msg.msg + '</td>' +
+				      '"></i>' + 
+				      '<a data-toggle="collapse" data-target="#message' + message_count + '">' + msg.msg + '</a>' + 
+				      '<div id="message' + message_count + '" class="collapse">' + 
+				      '<p><strong>Node:</strong>' + msg.name + '</p>' +
+				      '<p><strong>Time:' + msg.header.stamp.secs + '.' +
+				      msg.header.stamp.nsecs + '</p>' +
+				      '<p><strong>Severity:</strong>' + levelToString(msg.level) + '</p>' +
+				      '<p><strong>Location</strong>' + msg.file + ':in `' + msg.function + "\':" + msg.line + '</p>' +
+				      '<p><strong>Published Topics:</strong>' + msg.topics + '</p>' +
+				      '</div>' + 
+				      '</td>' +
 				      '<td><span class="label ' +
 				      levelToLabel(msg.level) + '">'
 				      + levelToString(msg.level) + '</span></td>' +
@@ -102,6 +114,7 @@ function rosInitialize(host) {
 
 				      '</tr>');
 				  $('html, body').animate({scrollTop: $("#message").offset().top}, 0);
+				  message_count++;
 				}
 			      });
       } catch(error) {
@@ -118,6 +131,7 @@ function rosInitialize(host) {
       $('#message').append('<div class="alert alert-block alert-success">'
 			 + '<a class="close" data-dismiss="alert" href="#">x</a>'
 			 + '<strong>Success!</strong> rosbridge connection established</div>');
+      document.title = "wxconsole " + uri;
     });
 }
 
@@ -131,7 +145,7 @@ function levelToLabel(level) {
   } else if (level <= 8) {
     return 'label-important';
   } else if (level <= 16) {
-    return 'label-important';
+    return 'label-inverse';
   }
 
   return ''

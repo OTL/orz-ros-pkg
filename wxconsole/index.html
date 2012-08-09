@@ -8,6 +8,7 @@
     <script type="text/javascript" src="js/jquery-1.7.2.js"></script>
     <script type="text/javascript" src="js/bootstrap.js"></script>
     <script type="text/javascript" src="js/bootstrap-button.js"></script>
+    <script type="text/javascript" src="js/bootstrap-collapse.js"></script>
     <script type="text/javascript" src="js/bootstrap-alert.js"></script>
 
     <script type="text/javascript" src="ros.js"></script>
@@ -33,20 +34,23 @@
 
     <div class="navbar navbar-fixed-bottom" id="button_wrapper">
       <div class="navbar-inner">
+	<div class="span1">
+	  <div class="navbar-text">Severity</div>
+	</div>
 	<div class="span3.5">
 	  <div class="btn-group" id="level_buttons"
 	       data-toggle="buttons-checkbox">
-	    <button class="btn btn-primary" id="Debug">Debug</button>
-	    <button class="btn btn-primary" id="Info">Info</button>
-	    <button class="btn btn-primary" id="Warn">Warn</button>
-	    <button class="btn btn-primary" id="Error">Error</button>
-	    <button class="btn btn-primary" id="Fatal">Fatal</button>
+	    <button class="btn btn-default" id="Debug"><i class="icon-pencil"></i>Debug</button>
+	    <button class="btn btn-primary" id="Info"><i class="icon-info-sign"></i>Info</button>
+	    <button class="btn btn-warning" id="Warn"><i class="icon-exclamation-sign"></i>Warn</button>
+	    <button class="btn btn-danger" id="Error"><i class="icon-remove-sign"></i>Error</button>
+	    <button class="btn btn-inverse" id="Fatal"><i class="icon-white icon-remove"></i>Fatal</button>
 	  </div>
 	</div>
 	<div class="span2">
 	  <button class="btn btn-info" id="pause_button"
 		  data-toggle="button">
-	    <i class="icon-pause"></i>Pause</button>
+	    <i class="icon-white icon-pause"></i>Pause</button>
 	</div>
       </div>
     </div> <!-- end of row (buttons) -->
