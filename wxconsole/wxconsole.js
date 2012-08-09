@@ -6,16 +6,47 @@ Connection.prototype.close = function(func) {
   this.socket.close();
 }
 
+function getCookie(key) {
+  var cookieString = document.cookie;
+  var cookieKeyArray = cookieString.split(";");
+  for (var i=0; i<cookieKeyArray.length; i++) {
+    var targetCookie = cookieKeyArray[i];
+    targetCookie = targetCookie.replace(/^\s+|\s+$/g, "");
+    var valueIndex = targetCookie.indexOf("=");
+    if (targetCookie.substring(0, valueIndex) == key) {
+      return unescape(targetCookie.slice(valueIndex + 1));
+    }
+  }
+  return "";
+}
+
 $(function() {
     (function(){
        $('.nav-tabs').button();
        $(".alert").alert();
        
        $('#level_buttons > .btn').button('toggle');
-       $('#connect').click(
+
+       // set initial value from cookie
+       if (getCookie("hostname") == "") {
+	 $('#hostname').val("localhost");
+       } else {
+	 console.log("using cookie" + getCookie("hostname"));	 
+	 $('#hostname').val(getCookie("hostname"));
+       }
+
+       $("#bottom_items").css('position', 'fixed');
+       $("#bottom_items").css('bottom', 0);
+       $("#bottom_items").css('height', 100);
+
+       $('#set_hostname').submit(
 	 function(){
-	   rosInitialize($('#hostname').val());
+	   var hostname = $('#hostname').val();
+	   document.cookie = "hostname=" + hostname + ";";
+	   rosInitialize(hostname);
+	   return false;
 	 });
+
        $('#level_buttons > .btn').click(
          function(){
 	   selected_level[$(this).text()] = !selected_level[$(this).text()];
@@ -58,7 +89,7 @@ function rosInitialize(host) {
 				if ((!is_paused) && selected_level[levelToString(msg.level)]) {
 				  $('#rosout_table > tbody:last').append(
 				    '<tr>' +
-				      '<td><i class="' + levelToIcon(msg.level) +
+				      '<td width="400"><i class="' + levelToIcon(msg.level) +
 				      '"></i>' + msg.msg + '</td>' +
 				      '<td><span class="label ' +
 				      levelToLabel(msg.level) + '">'
@@ -66,10 +97,11 @@ function rosInitialize(host) {
 				      '<td>' + msg.name + '</td>' +
 				      '<td>' + msg.header.stamp.secs + '.' +
 				      msg.header.stamp.nsecs + '</td>' +
-				      '<td>' + msg.topics + '</td>' +
+				      '<td width="100">' + msg.topics + '</td>' +
 				      '<td>' + msg.file + ':in `' + msg.function + "\':" + msg.line + '</td>' +
 
 				      '</tr>');
+				  $('html, body').animate({scrollTop: $("#message").offset().top}, 0);
 				}
 			      });
       } catch(error) {
