@@ -1,4 +1,3 @@
-
 test("levelToString", function() {
        equal(wxconsole.levelToString(-1), 'Unknown');
        equal(wxconsole.levelToString(0), 'Unknown');

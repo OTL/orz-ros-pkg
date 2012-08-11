@@ -20,6 +20,7 @@ wxconsole.getCookie = function(key) {
   return '';
 };
 
+
 wxconsole.levelToString = function(level) {
   if (level >= 16) {
     return 'Fatal';
@@ -42,7 +43,7 @@ wxconsole.levelToTBIcon = function(level) {
     Info : 'icon-info-sign',
     Warn : 'icon-exclamation-sign',
     Error : 'icon-remove-sign',
-    Fatal : 'icon-remove',
+    Fatal : 'icon-remove'
   };
 
   return dict[wxconsole.levelToString(level)];
@@ -167,7 +168,7 @@ wxconsole.Console = function(host, port) {
     document.title = self.titleString + " " + uri_;
   };
 
-  this.init = function(){
+  this.clear = function(){
     $('#' + self.tableId + ' > tbody:last').html("");
   };
 };

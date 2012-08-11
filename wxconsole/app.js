@@ -4,9 +4,7 @@ $(function() {
        $('.nav-tabs').button();
        $(".alert").alert();
        $('#level_buttons > .btn').button('toggle');
-       
        $('#rosout_table').css('table-layout', 'fixed');
-
        $("#bottom_items").css('position', 'fixed');
        $("#bottom_items").css('bottom', 0);
        $("#bottom_items").css('height', 100);
@@ -31,6 +29,9 @@ $(function() {
        $('#pause_button').click(function(){
 				  wx.togglePause();
 				  $(this).button('toggle');
+				});
+       $('#clear_button').click(function(){
+				  wx.clear();
 				});
 
        // set initial value from cookie
@@ -66,10 +67,14 @@ wxconsole.App = function(host, port) {
     controller_.togglePause();
   };
 
+  this.clear = function(){
+    controller_.clear();
+  };
+
   this.init = function(){
     var ROSOUT_TOPIC = '/rosout_agg';
 
-    controller_.init();
+    controller_.clear();
 
     close();
     connection_ = new ros.Connection(controller_.getUri());
