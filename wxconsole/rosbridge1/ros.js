@@ -44,7 +44,7 @@ var Connection = function(url) {
       var handler = ths.handlers[call.receiver][i]
       handler(call.msg);
     }
-  }
+  };
 
   this.magicServices = new Array('/rosbridge/topics','/rosbridge/services','/rosbridge/typeStringFromTopic','/rosbridge/typeStringFromService','/rosbridge/msgClassFromTypeString','/rosbridge/reqClassFromTypeString','/rosbridge/rspClassFromTypeString','/rosbridge/classFromTopic','/rosbridge/classesFromService');
 

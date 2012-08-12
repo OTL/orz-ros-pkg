@@ -13,14 +13,6 @@ test("levelToString", function() {
        equal(wxconsole.levelToString(999999999999999), 'Fatal');
      });
 
-test("getCookie", function() {
-       document.cookie = "hoge=val1";
-       document.cookie = "hogea=val2";
-       equal(wxconsole.getCookie('hoge'), 'val1');
-       equal(wxconsole.getCookie('hogea'), 'val2');
-       equal(wxconsole.getCookie('hogeaxxx'), '');
-     });
-
 test('levelToTBIcon', function() {
        equal(wxconsole.levelToTBIcon(-1), 'icon-leaf');
        equal(wxconsole.levelToTBIcon(0), 'icon-leaf');
