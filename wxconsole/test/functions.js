@@ -43,6 +43,12 @@ test('levelToTBLabel', function() {
        equal(wxconsole.levelToTBLabel(999999999999999), 'label-inverse');
      });
 
+test('MakeWebsocketUri', function() {
+       equal(wxconsole.MakeWebsocketUri('hoge', 1), 'ws://hoge:1');
+       equal(wxconsole.MakeWebsocketUri('', 0), 'ws://:0');
+       equal(wxconsole.MakeWebsocketUri('localhost', 9090), 'ws://localhost:9090');
+       });
+
 test('messageToHTML', function() {
        var msg1 = {
 	 name : '/node1',
