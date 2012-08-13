@@ -77,8 +77,8 @@ wxconsole.messageToHTML = function(msg) {
     '<p><strong>Time: </strong>' + msg.header.stamp.secs + '.' +
     msg.header.stamp.nsecs + '</p>' +
     '<p><strong>Severity: </strong>' + wxconsole.levelToString(msg.level) + '</p>' +
-    '<p><strong>Location: </strong>' + msg.file + ':in `' + msg.function + "\':" + msg.line + '</p>' +
-    '<p><strong>Published Topics: </strong>' + msg.topics + '</p>' +
+    '<p class="break-word><strong>Location: </strong>' + msg.file + ':in `' + msg.function + "\':" + msg.line + '</p>' +
+    '<p class="break-word><strong>Published Topics: </strong>' + msg.topics.join(', ') + '</p>' +
     '<p /><h3>' + msg.msg + '</h3>';
 };
 
@@ -102,6 +102,7 @@ wxconsole.MessageHTMLConverter = function(bufferSize) {
    * @type String
    */
   this.titleString = 'wxconsole';
+  this.uri = '';
 
   /**
    * id of table for display
@@ -156,27 +157,41 @@ wxconsole.MessageHTMLConverter = function(bufferSize) {
   };
 
   this.generateTableRowFromMessage = function(msg) {
+    var location = msg.file + ':in `' + msg.function + "\':" + msg.line;
+    var maxLocationLength = 50;
+    if (location.length  > maxLocationLength) {
+      location = location.substring(0, maxLocationLength) + '...';
+    }
+    var topics = msg.topics.join(', ').toString();
+    var maxTopicsLength = 50;
+    if (topics.length  > maxTopicsLength) {
+      topics = topics.substring(0, maxTopicsLength) + '...';
+    }
+
     return '<tr>' +
       '<td><i class="' + wxconsole.levelToTBIcon(msg.level) +
       '"></i>' + 
       '<a onclick="$(\'#modal_message' + numberOfReceivedMessages_ + '\').modal()" class="' + wxconsole.levelToString(msg.level) + '">' + msg.msg + '</a>' + 
-      '<div id="modal_message' + numberOfReceivedMessages_ + '" class="modal hide">' + 
+      '<div id="modal_message' + numberOfReceivedMessages_ + '" class="modal hide">' +
       '<div class="modal-header">'+
       '<button type="button" class="close" data-dismiss="modal">x</button>' +
       '<h3>Message</h3>' +
       '</div>' +
       '<div class="modal-body">' +
       wxconsole.messageToHTML(msg) +
-      '</div>' + 
+      '</div>' +
       '<div class="modal-footer">'+
       '<a href=\"#\" class=\"btn\" data-dismiss="modal">Close</a>' +
-      '</div>' +		  
-      '</div>' + 
+      '</div>' +
+      '</div>' +
       '</td>' +
       '<td><span class="label ' +
       wxconsole.levelToTBLabel(msg.level) + '">'
       + wxconsole.levelToString(msg.level) + '</span></td>' +
-      '<td>' + msg.name + '</td>' +
+      '<td class="break-word">' + msg.name + '</td>' +
+      '<td class="break-word">' + msg.header.stamp.secs + '.' + msg.header.stamp.nsecs + '</td>' +
+      '<td class="break-word">' + topics + '</td>' +
+      '<td class="break-word">' + location + '</td>' +
       '</tr>';
   };
 
@@ -200,7 +215,7 @@ wxconsole.MessageHTMLConverter = function(bufferSize) {
 	+ '<a class="close" data-dismiss="alert" href="#">&times</a>'
 	+ '<strong>Success!</strong> rosbridge connection established</div>');
     $('#' + self.messageId).children().delay(3000).fadeOut(1000);
-    document.title = self.titleString;
+    document.title = self.titleString + ' [' + self.uri + ']';
   };
 
   this.clear = function(){
@@ -212,13 +227,11 @@ wxconsole.MessageHTMLConverter = function(bufferSize) {
  * @class connection controller for rosbridge version1
  * 
  */
-wxconsole.Rosbridge1Adaptor = function(host, port, topic, bufferSize) {
-  var topic_ = topic;
-  if (topic_ == null) {
-    topic_ = '/rosout_agg';
-  };
+wxconsole.Rosbridge1Adaptor = function(host, port, topic, controller) {
   this.host = host;
   this.port = port;
+  this.topic = topic;
+  this.controller = controller;
 
   var conection_ = null;
   var self = this;
@@ -230,27 +243,21 @@ wxconsole.Rosbridge1Adaptor = function(host, port, topic, bufferSize) {
    * @type {String}
    */
   this.ROSBRIDGE_VERSION = '1.0';
-  this.controller = new wxconsole.MessageHTMLConverter(bufferSize);
 
-  /**
-   * rosout's topic name
-   * @returns {String} topic name
-   */
-  this.getTopic = function(){
-    return topic_;
-  };
-
-  /**
-   * Changes topic name. unsubscribe and subscribe new topic.
-   * @param {String} name new topic name
-   */
-  this.setTopic = function(name){
-    connection_.handlers = new Array();
-    topic_ = name;
-    connection_.callService('/rosjs/subscribe',
-			    [topic_, -1],
+  this.connect = function(){
+    try {
+      connection_.handlers = new Array();
+      connection_.callService('/rosjs/subscribe',
+			      [self.topic, -1],
 			    function(e){});
-    connection_.addHandler(topic_, self.controller.onMessageCallback);
+      
+    } catch (error) {
+      console.error('Problem subscribing!');
+      return;
+    }
+    connection_.addHandler(self.topic, self.controller.onMessageCallback);
+    self.controller.uri = wxconsole.MakeWebsocketUri(self.host, self.port);
+    self.controller.onConnectedCallback();
   };
 
   /**
@@ -258,8 +265,12 @@ wxconsole.Rosbridge1Adaptor = function(host, port, topic, bufferSize) {
    */
   this.close = function(){
     if (connection_ != null) {
-      connection_.socket.close();
-      connection_.handlers = new Array(); // rosws bug?
+      try {
+	connection_.socket.close();
+	connection_.handlers = new Array(); // rosws bug?
+      } catch (x) {
+	console.log('rosbridge1 close error: ' + x);
+      }
     }
   };
 
@@ -275,21 +286,8 @@ wxconsole.Rosbridge1Adaptor = function(host, port, topic, bufferSize) {
     // clear 
     connection_.setOnClose(self.controller.onCloseCallback);
     connection_.setOnError(self.controller.onErrorCallback);
-    
-    connection_.setOnOpen(
-      function (e) {
-	try {
-	  connection_.addHandler(topic_, self.controller.onMessageCallback);
-	  connection_.callService('/rosjs/subscribe',
-				  [topic_, -1],
-				  function(e){});
-	} catch (error) {
-	  console.error('Problem subscribing!');
-	  return;
-	}
-	self.controller.onConnectedCallback();
-      });
-    };
+    connection_.setOnOpen(self.connect);
+  };
 };
 
 
@@ -300,17 +298,14 @@ wxconsole.Rosbridge1Adaptor = function(host, port, topic, bufferSize) {
  * @param {String} topic
  * @param {Number} bufferSize
  */
-wxconsole.Rosbridge2Adaptor = function(host, port, topic, bufferSize) {
-  var topic_ = topic;
-  var conection_ = null;
-  var self = this;
-
+wxconsole.Rosbridge2Adaptor = function(host, port, topic, controller) {
   this.host = host;
   this.port = port;
+  this.topic = topic;
+  this.controller = controller;
 
-  if (topic_ == null) {
-    topic_ = '/rosout_agg';
-  };
+  var conection_ = null;
+  var self = this;
 
   /**
    * version name of rosbridge
@@ -319,25 +314,24 @@ wxconsole.Rosbridge2Adaptor = function(host, port, topic, bufferSize) {
    * @type {String}
    */
   this.ROSBRIDGE_VERSION = '2.0';
-  this.controller = new wxconsole.MessageHTMLConverter(bufferSize);
 
-  /**
-   * Returns name of subscribing topic name
-   * @returns {String} current topic name
-   */
-  this.getTopic = function(){
-    return topic_;
-  };
+  this.connect = function(e){
+    try {
+      connection_.unsubscribe(self.topic);
+    } catch (x) {
+      // don't care
+      console.info('error in unsubscribe, this can be ignored');
+    }
 
-  /**
-   * Changes the topic name 
-   * @param {String} name name of new topic
-   */
-  this.setTopic = function(name){
-    connection_.unsubscribe(topic_);
-    topic_ = name;
-    connection_.subscribe(self.controller.onMessageCallback,
-			  topic_);
+    try {
+      connection_.subscribe(self.controller.onMessageCallback,
+			    self.topic);
+    } catch(error) {
+      console.error('problem in registering: ' + error);
+      return;
+    }
+    self.controller.uri = wxconsole.MakeWebsocketUri(self.host, self.port);
+    self.controller.onConnectedCallback();
   };
 
   /**
@@ -345,8 +339,13 @@ wxconsole.Rosbridge2Adaptor = function(host, port, topic, bufferSize) {
    */
   this.close = function() {
     if (connection_ != null) {
-      connection_.unsubscribe(topic_);
-      connection_.socket.close();
+      try {
+	connection_.unsubscribe(this.topic);
+	connection_.socket.close();
+      } catch (x) {
+	// ignore closing error
+	console.log('rosbridge2 close error ' + x);
+      }
     }
   };
 
@@ -363,19 +362,8 @@ wxconsole.Rosbridge2Adaptor = function(host, port, topic, bufferSize) {
     // clear 
     connection_.onClose = self.controller.onCloseCallback;
     connection_.onError = self.controller.onErrorCallback;
-    
-    connection_.onOpen =
-      function (e) {
-	try {
-	  connection_.subscribe(self.controller.onMessageCallback,
-				topic_);
-	} catch(error) {
-	  console.error('problem in registering: ' + error);
-	  return;
-	}
-	self.controller.onConnectedCallback();
-      };
-    };
+    connection_.onOpen = self.connect;
+  };
 };
 
 /**
@@ -397,7 +385,45 @@ wxconsole.setRosbridgeVersion = function(version) {
  */
 wxconsole.App = function() {
   var adaptor = null;
+  var hostname = "";
   var port = 9090;
+  var bufferSize = 500;
+  var version = '1.0';
+  var topic = '/rosout_agg'
+
+  this.getCookies = function(){
+    // initialize converter
+    var cookieBufferSize = $.cookie('bufferSize');
+    if (cookieBufferSize) {
+      bufferSize = cookieBufferSize;
+    }
+    // set initial value from cookie
+    var cookiePortNumber = $.cookie('portNumber');
+    if (cookiePortNumber) {
+      port = cookiePortNumber;
+    }
+    var cookieTopic = $.cookie('topic');
+    if (cookieTopic) {
+      topic = cookieTopic;
+    }
+
+    hostname = $.cookie('hostname');
+
+    version = $.cookie('rosbridgeVersion');
+    if (version == null) {
+      if (ros.Connection != undefined) {
+	wxconsole.setRosbridgeVersion('1.0');
+      } else if (ros.Bridge != undefined) {
+	wxconsole.setRosbridgeVersion('2.0');
+      } else {
+	console.error('ros.js is not included');
+      }
+    } else {
+      wxconsole.setRosbridgeVersion(version);
+    }
+  };
+
+  
 
   $('.nav-tabs').button();
   $(".alert").alert();
@@ -408,31 +434,16 @@ wxconsole.App = function() {
   $("#bottom_items").css('bottom', 0);
   $("#bottom_items").css('height', 100);
 
-  var version = $.cookie('rosbridgeVersion');
-  if (version == null) {
-    if (ros.Connection != undefined) {
-      wxconsole.setRosbridgeVersion('1.0');
-    } else if (ros.Bridge != undefined) {
-      wxconsole.setRosbridgeVersion('2.0');
-    } else {
-      console.error('ros.js is not included');
-    }
-  } else {
-    wxconsole.setRosbridgeVersion(version);
-  }
+  this.getCookies();
+  var converter = new wxconsole.MessageHTMLConverter(bufferSize);
 
-  // set initial value from cookie
-  var cookiePortNumber = $.cookie('portNumber');
-  if (cookiePortNumber) {
-    port = cookiePortNumber;
-  }
-  var savedHostName = $.cookie('hostname');
-  if (savedHostName == "") {
+  if (hostname == "" || hostname == null) {
     $('#hostname').val("localhost");
   } else {
-    console.log("using cookie: " + savedHostName);
-    $('#hostname').val(savedHostName);
-    adaptor = new wxconsole.Adaptor(savedHostName, port);
+    $('#hostname').val(hostname);
+    console.log('auto connect using cookie:' +
+		hostname + ':' + port + ':' + topic);
+    adaptor = new wxconsole.Adaptor(hostname, port, topic, converter);
     adaptor.init();
   }
 
@@ -444,30 +455,29 @@ wxconsole.App = function() {
 	adaptor.close();
 	delete adaptor;
       }
-      adaptor = new wxconsole.Adaptor(hostname, port);
+      adaptor = new wxconsole.Adaptor(hostname, port, topic, converter);
       adaptor.init();
       return false;
     });
 
   $('#level_buttons > .btn').click(
     function(){
-      adaptor.controller.toggleSelectedLevel($(this).text());
+      converter.toggleSelectedLevel($(this).text());
       $(this).button('toggle');
     });
   $('#pause_button').click(
     function(){
-      adaptor.controller.togglePause();
+      converter.togglePause();
       $(this).button('toggle');
     });
   $('#clear_button').click(
     function(){
-      adaptor.controller.clear();
+      converter.clear();
     });
   $('#setting_button').click(
     function(){
-      console.log(adaptor.getTopic());
-      $('#rosout_topic_input').val(adaptor.getTopic());
-      $('#buffer_size_input').val(adaptor.controller.MaxNumberOfDisplayedMessages);
+      $('#rosout_topic_input').val(adaptor.topic);
+      $('#buffer_size_input').val(converter.MaxNumberOfDisplayedMessages);
       $('#port_number_input').val(adaptor.port);
       $('input[name="rosbridgeVersion"]').val([adaptor.ROSBRIDGE_VERSION]);
       $('#modal_setting').modal();
@@ -475,14 +485,18 @@ wxconsole.App = function() {
   $('#setup_submit').click(
     function(){
       var topic = $('#rosout_topic_input').val();
-      var bufferSize = $('#buffer_size_input').val();
+      var inputBufferSize = $('#buffer_size_input').val();
       var version = $('input[name="rosbridgeVersion"]:checked').val();
       var newPortNumber = $('#port_number_input').val();
+
+      $.cookie('topic', topic);
+      $.cookie('rosbridgeVersion', version);
+      $.cookie('portNumber', newPortNumber);
+      $.cookie('bufferSize', inputBufferSize);
 
       // if version is changed, create new wx instance
       if (version != adaptor.ROSBRIDGE_VERSION ||
 	  newPortNumber != port) {
-	$.cookie('rosbridgeVersion', version);
 	if (adaptor != null){
 	  adaptor.close();
 	  delete adaptor;
@@ -490,13 +504,16 @@ wxconsole.App = function() {
 	var hostname = $('#hostname').val();
 	wxconsole.setRosbridgeVersion(version);
 	port = newPortNumber;
-	$.cookie('portNumber', port);
-	adaptor = new wxconsole.Adaptor(hostname, port, topic, bufferSize);
+	bufferSize = inputBufferSize;
+	converter.MaxNumberOfDisplayedMessages = inputBufferSize;
+	adaptor = new wxconsole.Adaptor(hostname, port, topic, converter);
 	adaptor.init();
       } else {
 	// set variables to current wx instance
-	adaptor.setTopic(topic);
-	adaptor.controller.MaxNumberOfDisplayedMessages = bufferSize;
+	adaptor.topic = topic;
+	converter.MaxNumberOfDisplayedMessages = bufferSize;
+	// reconnect
+	adaptor.connect();
       }
     });
 };

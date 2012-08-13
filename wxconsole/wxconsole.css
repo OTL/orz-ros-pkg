@@ -1,3 +1,7 @@
+.break-word {
+ word-wrap: break-word;
+}
+
 .Fatal {
     color:#9d261d;
 }
