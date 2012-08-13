@@ -27,6 +27,7 @@ import rosgraph_msgs
 import rospy
 
 g_master_process = None
+g_processes = []
 
 def notify_with_icon(name, body):
   """ Utility function for Notification"""
@@ -147,14 +148,24 @@ def build_service_submenu(menu, services):
   build_submenu(menu, services, [["Info", show_service_info]])
 
 
+def launch_binary(w, package, binary):
+  g_processes.append(subprocess.Popen(["rosrun", package, binary]))
+
+def launch_launch(w, package, launch):
+  g_processes.append(subprocess.Popen(["roslaunch", package, launch]))
+
 def launch_console(w):
   """ launch rxconsole"""
-  subprocess.Popen(["rxconsole"])
+  g_processes.append(subprocess.Popen(["rxconsole"]))
 
 def exit_menu(w):
   """exit this program"""
+  for process in g_processes:
+    process.terminate()
+  for process in g_processes:
+    process.wait()
   if g_master_process:
-    print 'waiting'
+    print 'waiting master'
     g_master_process.terminate()
     g_master_process.wait()
   sys.exit(0)
@@ -198,6 +209,10 @@ def main():
           time.sleep(1)
     else:
       print "usage: %s [--with-master]"%sys.argv[0]
+      print " ros param: ~rosrun    additional launch binaries"
+      print "          : ~roslaunch additional launch file"
+      print "example)"
+      print "%s --with-master _rosrun:='[[rviz, rviz], [rosbridge_server, rosbridge.py]]' _roslaunch:='[[pr2_gazebo, pr2_empty_world.launch]]'"%sys.argv[0]
       sys.exit(0)
 
   if not check_master():
@@ -231,6 +246,24 @@ def main():
   console_item.connect("activate", launch_console)
   console_item.connect("activate", clear_status, ind)
   menu.append(console_item)
+
+  # targets = [['package', 'binary'], ['package', 'binary']]
+  if rospy.has_param('~rosrun'):
+    rosrun_targets = rospy.get_param('~rosrun')
+    for package, binary in rosrun_targets:
+      console_item = gtk.MenuItem(binary)
+      console_item.connect("activate", launch_binary, package, binary)
+      console_item.connect("activate", clear_status, ind)
+      menu.append(console_item)
+
+  # targets = [['package', 'binary'], ['package', 'binary']]
+  if rospy.has_param('~roslaunch'):
+    rosrun_targets = rospy.get_param('~roslaunch')
+    for package, launch in rosrun_targets:
+      console_item = gtk.MenuItem(launch)
+      console_item.connect("activate", launch_launch, package, launch)
+      console_item.connect("activate", clear_status, ind)
+      menu.append(console_item)
 
   menu.append(gtk.SeparatorMenuItem())
 
