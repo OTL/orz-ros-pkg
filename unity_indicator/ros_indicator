@@ -207,7 +207,7 @@ def main():
         g_master_process = subprocess.Popen(["roscore"])
         while not check_master():
           time.sleep(1)
-    else:
+    elif sys.argv[1] == '--help' or sys.argv[1] == '-h':
       print "usage: %s [--with-master]"%sys.argv[0]
       print " ros param: ~rosrun    additional launch binaries"
       print "          : ~roslaunch additional launch file"

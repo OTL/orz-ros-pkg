@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="unity_indicator" type="ros_indicator" name="ros_indicator"
+        output="screen">
+    <rosparam param="rosrun">
+      [[rosbridge_server, rosbridge.py], [rviz, rviz]]
+    </rosparam>
+  </node>
+</launch>
