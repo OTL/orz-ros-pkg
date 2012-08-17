@@ -161,7 +161,11 @@ def launch_console(w):
 def exit_menu(w):
   """exit this program"""
   for process in g_processes:
-    process.terminate()
+    if not process.poll():
+      try:
+        process.kill()
+      except:
+        pass
   for process in g_processes:
     process.wait()
   if g_master_process:
